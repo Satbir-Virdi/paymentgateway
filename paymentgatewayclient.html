@@ -1,0 +1,241 @@
+<HTML>
+	<head>
+		<script>
+
+			const rootUrl="http://localhost:8080/api/payment/";
+
+			function getHeadersForCurl() {
+				var requestingSystem = document.getElementById("requestingSystem").value;
+				return '-i -H "Accept: application/json" -H "requesting-system: ' + requestingSystem + '" ';
+			}
+
+			function GenerateAPICommand() {
+				var action = document.getElementById("action").value;
+				var curl =  document.getElementById("curl");
+
+				if(action==="POST") {
+
+					var requesterReference = document.getElementById("requesterReference").value;
+					var cardNumber = document.getElementById("cardNumber").value;
+					var cv2 = document.getElementById("cv2").value;
+					var expiryMonth = document.getElementById("expiryMonth").value;
+					var expiryYear = document.getElementById("expiryYear").value;
+					var amount = document.getElementById("amount").value;
+					var currency = document.getElementById("currency").value;
+					
+					var data = {"requesterReference" : requesterReference,
+								"cardNumber" : cardNumber,
+								"cv2":cv2,
+								"expiryMonth":expiryMonth,
+								"expiryYear":expiryYear,
+								"amount":amount,
+								"currency":currency}
+
+					var curlCommand = "CURL -X POST -d '" + JSON.stringify(data) + "' " + getHeadersForCurl() + rootUrl;
+					curl.value = curlCommand;
+					sendRestRequest("POST",rootUrl,data);
+				}
+
+				if(action==="GET") {
+					var transactionId =  document.getElementById("transactionId").value;
+					var sendto = rootUrl + "/" + transactionId
+					var curlCommand = "CURL " + getHeadersForCurl() + sendto;
+					curl.value = curlCommand;
+
+					sendRestRequest("GET",sendto,null);
+				}
+
+				if(action==="GETALL") {
+					var requestingSystem = document.getElementById("requestingSystem").value;
+					var curlCommand = "CURL " + getHeadersForCurl() + rootUrl;
+					curl.value = curlCommand;
+
+					sendRestRequest("GET",rootUrl,null);
+				}
+
+				if(action==="PUT") {
+					var transactionId =  document.getElementById("transactionId").value;
+					var sendto = rootUrl + "/" + transactionId
+					var curlCommand = "CURL " + getHeadersForCurl() + sendto;
+					curl.value = curlCommand;
+
+					sendRestRequest("PUT",sendto,null);
+				}
+
+				
+				
+			}
+
+			function sendRestRequest(method, url, data) {
+
+				var responseDIV =  document.getElementById("response");
+				var requestingSystem = document.getElementById("requestingSystem").value;
+				responseDIV.innerHTML = "sending...";
+
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+         				if (this.readyState == 4 && this.status == 200) {
+             				responseDIV.innerHTML =  this.responseText;
+         				}
+         				else {
+         					responseDIV.innerHTML =  "<span style='color:#f00;'> ERROR " + this.status + " " + this.statusText + "</span>" ;	
+         				}
+    				};
+    				xhttp.open(method, url, true);
+    				xhttp.setRequestHeader("Content-type", "application/json");
+    				xhttp.setRequestHeader("requesting-system", requestingSystem); 
+    				if (method === "POST") {
+    					xhttp.send(JSON.stringify(data));
+    				}
+    				else {
+    					xhttp.send();
+    				}
+					responseDIV.innerHTML = "awaiting response...";
+
+			}
+
+			function showRequiredPayload() {
+				var action = document.getElementById("action").value;
+				var payloadPOST = document.getElementById("payloadPOST")
+				var payloadGETorPUT = document.getElementById("payloadGETorPUT")
+				var payloadGETALL = document.getElementById("payloadGETALL")
+
+				if (action === "GET" || action ==="PUT") {
+					payloadPOST.style.display = "none";
+					payloadGETorPUT.style.display = "block";
+					payloadGETALL.style.display = "none";
+				}
+
+				if (action === "GETALL") {
+					payloadPOST.style.display = "none";
+					payloadGETorPUT.style.display = "none";
+					payloadGETALL.style.display = "block";
+				}
+
+				if (action === "POST") {
+					payloadPOST.style.display = "block";
+					payloadGETorPUT.style.display = "none";
+					payloadGETALL.style.display = "none";
+				}
+
+			}
+		</script>
+
+		<style>
+			label {
+				width: 200px;
+				display: block;
+    			float: left;
+			}
+			h4 {
+				margin-top: 40px;
+			}
+		</style>
+
+
+	</head>
+
+	<body>
+		<h1>Payment Gateway API Testing Client</h1>
+
+		<h3>Instructions</h3>
+		<p>The Payment Gateway is a sample Rest application created in Spring Boot, to demonstrate calling a REST api. The concept is that when a 
+		customer wishes to make a purchase on one of your company's websites, the purchase request gets sent via REST to the payment gateway server.</p>
+		<p>The normal use case is:
+			<ol>
+				<li>Client sends a POST request to http://localhost:8080/api/payment to request a new payment is attempted</li>
+				<li>The server responds to this request with a unique transaction ID</li>
+				<li>The client sends a GET request to  http://localhost:8080/api/payment/{transactionId}</li>
+				<li>The server responds with the status of the payment request</li>
+			</ol>
+			In addition clients can:
+			<ul>
+				<li>Send a GET request to http://localhost:8080/api/payment to get a list of all payments attempted</li>
+				<li>Send a PUT request to http://localhost:8080/api/payment/{transactionId} to refund a payment</li>
+			</ul>
+		</p>
+		<p>Clients must include a header containing a 3 letter code for the requesting system. Valid codes are BRL, RJK and MTY. You can only do a GET
+		for a payment request with a matching requesting system code.</p>
+		<p>
+			This page can be used to generate a rest request, and it will send it to the server. The equivalent CURL command will also be provided.
+		</p>
+
+		<h4>Create REST request</h4>
+		<p>
+			<label for="action">Action</label>
+			<select id="action" onChange="showRequiredPayload()">
+				<option value="POST">New Payment</option>
+				<option value="GET">Get Payment Status</option>
+				<option value="GETALL">Get a list of payments</option>
+				<option value="PUT">Refund</option>
+			</select>
+		</p>
+
+		<h4>Headers</h4>
+		<p>
+			<label for="requestingSystem">Requesting System</label>
+			<input id="requestingSystem" value="BRL"/>
+		</p>
+
+		<h4>Payload / Parameters </h4>
+		<div id="payloadPOST">
+			<p>
+				<label for="requesterReference">Requester Reference</label>
+				<input id="requesterReference" value="123456"/>
+			</p>
+	    
+			<p>
+				<label for="cardNumber">Card Number</label>
+				<input id="cardNumber" value="1234567890123456"/>
+			</p>
+	    
+	    	<p>
+				<label for="cv2">CV 2</label>
+				<input id="cv2" value="123"/>
+			</p>
+
+			<p>
+				<label for="expiryMonth">Expiry Month</label>
+				<input id="expiryMonth" value="07"/>
+			</p>
+
+			<p>
+				<label for="expiryYear">Expiry Year</label>
+				<input id="expiryYear" value="2023"/>
+			</p>
+
+			<p>
+				<label for="amount">Amount</label>
+				<input id="amount" value="50.00"/>
+			</p>
+
+			<p>
+				<label for="currency">Currency</label>
+				<input id="currency" value="USD"/>
+			</p>
+
+    	
+		</div>
+
+		<div id="payloadGETALL" style="display: none;">
+			<p>
+			No additional data is required for this request
+			</p>
+		</div>
+
+		<div id="payloadGETorPUT" style="display: none;">
+			<p>
+				<label for="transactionId">Transaction ID</label>
+				<input id="transactionId" value="(guid)"/>
+			</p>
+		</div>
+
+		<button style="margin-top:40px;" onClick="GenerateAPICommand();">Generate API Command</button>
+
+		<h4>Curl command</h4>
+		<textarea id="curl" style="border: 1px solid #000; width: 600px;" rows=10> </textarea>
+
+		<h4>Response from server</h4>
+		<div id="response" style="border: 1px solid #000; width: 600px; min-height: 100px;"></div>
+	</body>
+</HTML>
