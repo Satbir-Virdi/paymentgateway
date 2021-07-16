@@ -1,6 +1,6 @@
 node{
 	stage('git checkout') {
-		git 'https://github.com/vppmatt/paymentgateway'
+		git branch: 'main', url: 'https://github.com/vppmatt/paymentgateway'
 	}
 	stage('Build') {
          steps {
