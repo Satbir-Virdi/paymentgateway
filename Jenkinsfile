@@ -3,8 +3,6 @@ node{
 		git branch: 'main', url: 'https://github.com/vppmatt/paymentgateway'
 	}
 	stage('Build') {
-         steps {
             sh 'mvn clean package'
-         }
       }
 }
