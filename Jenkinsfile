@@ -3,6 +3,7 @@ node{
 		git branch: 'main', url: 'https://github.com/vppmatt/paymentgateway'
 	}
 	stage('Build') {
-            sh 'mvn clean package'
+		def mvnHome = tool name: 'maven-3.8.1', type: 'maven'
+            sh "${mvnHome}/build/mvn clean package"
       }
 }
