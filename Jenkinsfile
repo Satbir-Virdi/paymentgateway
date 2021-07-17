@@ -11,6 +11,7 @@ node{
 		def jar_file = 'paymentgateway'
 		def props_file = 'application.live.properties'
 
+        sh "chmod +x -R ${env.WORKSPACE}"
 		sh "JENKINS_NODE_COOKIE=dontKillMe /home/ec2-user/deploy.sh ${server_port} ${jar_file} ${props_file}"
       }
 }
